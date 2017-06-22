@@ -3,6 +3,6 @@ applications:
   memory: 256M
   instances: 1
   domain: mybluemix.net
-  name: nodsfr4523
-  host: nodsfr4523
+  name: mkgame-node
+  host: mkgame-node
   disk_quota: 1024M
