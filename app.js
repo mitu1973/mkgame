@@ -1,4 +1,5 @@
 var express= require('express');
+var cfenv = require('cfenv');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
@@ -12,12 +13,14 @@ var avtar_list=[
 //Static resources server
 
 app.use(express.static(__dirname + '/public'));
+// get the app environment from Cloud Foundry
+var appEnv = cfenv.getAppEnv();
 
 app.get('/', function(req, res){
   res.sendfile('index.html');
 });
 
-http.listen(3000, function(){
+http.listen(appEnv.port, '0.0.0.0', function(){
   console.log('listening on *:3000');
 });
 
