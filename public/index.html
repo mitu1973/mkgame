@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Sample Game in Node js by Manoj</title>
+
+
+<link rel="stylesheet" type="text/css" href="css/mkgame.css" />
+
+
+</head>
+<body>
+
+
+    <div id="wrapper">
+        <div id="content">         
+			<p>
+				<div id="gmsg"></div>
+				<div id="placehere"></div>
+				<br>
+				<div id="btnjoin" style="display:None" > <input id="join" type="submit" value="Join the battle"> </div>
+				<div>
+					
+					<img  id="myavtarimg" name="avtars"   alt="None" width="50" height="50" style="vertical-align:middle"> 
+					<img  id="mybullet" name="mybullet"   width="0" height="0" style="vertical-align:middle"> 
+					<img width="200" height="50"  src = "fly_birds.gif" style="display:inline">  
+					<img width="200" height="50"  src = "fly_bird1.gif" style="display:inline">  
+					<img width="200" height="50"  src = "fly_birds.gif" style="display:inline">  
+				</div>
+				<br>
+				<canvas id="ctx" width="1000" height="500" style="border:1px solid #d3d3d3;">
+				Your browser does not support the HTML5 canvas tag.</canvas>
+				<br>
+				<div id="playerholder"></div>
+			</p>
+		</div>
+			<div id="rightcolumn" style="display:None">					
+				<p> 
+					<textarea id="chattext" rows="30" cols="30" disabled >
+					
+					</textarea>
+					<br>
+					<input type="text" id="chatinput" size="30">
+
+				</p>
+			</div>
+	</div>
+	
+<img type="hidden" id="bullet" src="bullet.png" alt="The Scream" width="0" height="0">
+<img type="hidden" id="target" src="target.png" alt="The Scream" width="0" height="0">
+<img type="hidden" id="birdfall" src="birdfall.png" alt="Falling Bird" width="0" height="0">
+<img type="hidden" id="background" src="background1.jpg" alt="The Scream" width="0" height="0">
+<input type="hidden" id="mypname" >
+
+<script src='js/jquery.min.js'></script>	
+<script src="/socket.io/socket.io.js"></script>
+<script type="text/javascript">
+
+//window.onload=function(){
+
+//}
+function myavtar(id){
+
+	var myavtar=document.getElementById(id);
+	var destimg=document.getElementById("myavtarimg");
+	destimg.setAttribute("src", myavtar.src);
+	destimg.setAttribute("name", id);
+	destimg.setAttribute("title", myavtar.title);
+	var destimg=document.getElementById("btnjoin").style.display="Block";;
+	document.getElementById("mybullet").src=myavtar.name;	
+	document.getElementById("mybullet").name=myavtar.name;	
+} 
+
+	//var playername = document.getElementById("pname").value;
+	var c = document.getElementById("ctx");
+	var backgroundimg = document.getElementById("background");
+	var ctx = c.getContext("2d");
+	
+	ctx.font='30px Arial';	
+	//var ctx = c.getContext("2d");
+	//ctx.beginPath();
+	//ctx.arc(95,50,r+=5,0,2*Math.PI);
+	//ctx.stroke();
+	var socket = io();
+	var player1img = document.getElementById("playeravtar");
+	var bulletimg= document.getElementById("bullet");
+	var targetimg= document.getElementById("target");
+	var birdfallimg= document.getElementById("birdfall");
+	socket.on('newPosition',function(data){
+		ctx.clearRect(0,0,500,500);
+		ctx.drawImage(backgroundimg,0,0);
+					ctx.drawImage(targetimg,data.target.tx,data.target.ty);
+		for(var i = 0;i < data.player.length;i++){
+			ctx.fillText(data.player[i].score,data.player[i].x,data.player[i].y);
+			var player1img = document.getElementById(data.player[i].avtarname); 
+			ctx.drawImage(player1img,data.player[i].x,data.player[i].y);
+			//ctx.drawImage(targetimg,data.player[i].x1,data.player[i].y1);
+		}
+		for(var i = 0;i < data.bullet.length;i++){
+			bulletimg = document.getElementById(data.bullet[i].bulletimg);
+			ctx.drawImage(bulletimg,data.bullet[i].x,data.bullet[i].y);
+
+		}
+		for(var i = 0;i < data.score.length;i++){
+			ctx.fillText(data.score[i].score,data.score[i].x,data.score[i].y);
+		}
+		for(var i = 0;i < data.birdfall.length;i++){
+			ctx.drawImage(birdfallimg,data.birdfall[i].x,data.birdfall[i].y);
+		}
+	});
+	
+	socket.on('chatmsg',function(chattext){
+		document.getElementById("chattext").innerHTML += "\n"+chattext;
+	});
+	socket.on('newplayer',function(welcomepack){
+
+			var msg=welcomepack.msg;
+			//document.getElementById("gmsg").innerHTML = msg;
+			ctx.clearRect(0,0,500,500);
+			ctx.fillStyle ="yellow";
+			ctx.font = "25px Verdana";
+			ctx.drawImage(backgroundimg,0,0);
+			ctx.fillText(msg,10,200);
+			
+			if(welcomepack.ready == 0){
+				var rangeObj = new Range();
+				theParent = document.getElementById("btnjoin");
+				rangeObj.selectNodeContents(theParent);
+				rangeObj.deleteContents();	
+				
+				var rangeObj = new Range();
+				theParent = document.getElementById("myavtarimg");
+				rangeObj.selectNodeContents(theParent);
+				rangeObj.deleteContents();					
+			}
+				
+			for (i=0;i<=welcomepack.avtars.length-1;i++){
+				var imgid = welcomepack.avtars[i].av;
+				var title = welcomepack.avtars[i].avname;
+				var imgsrc = imgid+".png";
+				var clickfn = "myavtar('"+imgid+"')";
+				var elem = document.createElement("img");
+				var bulletimg = welcomepack.avtars[i].bulletimg;
+				elem.setAttribute("src", imgsrc);
+				elem.setAttribute("height", "50");
+				elem.setAttribute("width", "50");
+				elem.setAttribute("id", imgid);	
+				elem.setAttribute("onclick", clickfn);
+				elem.setAttribute("title", title);
+				
+				//elem.setAttribute("title", bulletimg);
+				elem.setAttribute("name", bulletimg);
+				
+				document.getElementById("placehere").appendChild(elem);
+			}
+	});
+	socket.on('startplay',function(startplaypack){
+		var plname=startplaypack.myname;
+		var src = startplaypack.myavtar+".png";
+		
+		var rangeObj = new Range();
+		theParent = document.getElementById("playerholder");
+		rangeObj.selectNodeContents(theParent);
+		rangeObj.deleteContents();
+		
+		theParent = document.getElementById("placehere");
+		rangeObj.selectNodeContents(theParent);
+		rangeObj.deleteContents();		
+
+		theParent = document.getElementById("btnjoin");
+		rangeObj.selectNodeContents(theParent);
+		rangeObj.deleteContents();	
+		
+		for(var i= 0;i < startplaypack.player.length;i++){
+			var avtar = startplaypack.player[i].avtarname;
+			var playername = startplaypack.player[i].playername;
+			var src=avtar+".png";
+			var id = avtar;	
+			var elem = document.createElement("img");
+			var bulletimg = startplaypack.player[i].bulletimg;
+			
+			elem.setAttribute("src", src);
+			elem.setAttribute("height", "50");
+			elem.setAttribute("width", "50");
+			elem.setAttribute("id", id);	
+			elem.setAttribute("title",playername);	
+			elem.setAttribute("name",playername);			
+			document.getElementById("playerholder").appendChild(elem);	
+			
+			// create bullet images
+			var elem2 = document.createElement("img");
+			elem2.setAttribute("src", bulletimg);
+			elem2.setAttribute("height", "0");
+			elem2.setAttribute("width", "0");
+			elem2.setAttribute("id", bulletimg);	
+			elem2.setAttribute("name",bulletimg);			
+			document.getElementById("playerholder").appendChild(elem2);				
+
+		
+		}
+			
+	
+	});	
+	document.onkeydown = function(event){
+		if(event.keyCode == 68 ) //d
+			socket.emit('keyPress',{inputId:'right',state:true});
+		else if(event.keyCode == 83 ) //s
+			socket.emit('keyPress',{inputId:'down',state:true});
+		else if(event.keyCode == 65 ) //a
+			socket.emit('keyPress',{inputId:'left',state:true});
+		else if(event.keyCode == 87 ) //w
+			socket.emit('keyPress',{inputId:'up',state:true});
+
+		if(event.keyCode == 39 ) //d
+			socket.emit('keyPress',{inputId:'right',state:true});
+		else if(event.keyCode == 40 ) //s
+			socket.emit('keyPress',{inputId:'down',state:true});
+		else if(event.keyCode == 37 ) //a
+			socket.emit('keyPress',{inputId:'left',state:true});
+		else if(event.keyCode == 38 ) //w
+			socket.emit('keyPress',{inputId:'up',state:true});
+
+	}
+	document.onkeyup = function(event){
+
+		if(event.keyCode == 68 ) //d
+			socket.emit('keyPress',{inputId:'right',state:false});
+		else if(event.keyCode == 83 ) //s
+			socket.emit('keyPress',{inputId:'down',state:false});
+		else if(event.keyCode == 65 ) //a
+			socket.emit('keyPress',{inputId:'left',state:false});
+		else if(event.keyCode == 87 ) //w
+			socket.emit('keyPress',{inputId:'up',state:false});
+
+		if(event.keyCode == 39 ) //d
+			socket.emit('keyPress',{inputId:'right',state:false});
+		else if(event.keyCode == 40 ) //s
+			socket.emit('keyPress',{inputId:'down',state:false});
+		else if(event.keyCode == 37 ) //a
+			socket.emit('keyPress',{inputId:'left',state:false});
+		else if(event.keyCode == 38 ) //w
+			socket.emit('keyPress',{inputId:'up',state:false});
+	}
+ /*
+	document.onmousedown = function(event){
+		if(event.x > 10 && event.x <1000 && event.y > 50 && event.y < 900 )
+		socket.emit('keyPress',{inputId:'attack',state:true});	
+	}
+	document.onmouseup = function(event){
+
+			socket.emit('keyPress',{inputId:'attack',state:false});	
+		}
+	document.onmousemove = function(event){
+		var y = -500 + event.clientX - 8;
+		var x = -250 + event.clientY - 8;
+
+		var angle = Math.atan2(x,y) *180/Math.PI ;
+
+		socket.emit('keyPress',{inputId:'mouseAngle',state:angle,cx:x,cy:y});		
+	}
+*/
+
+	$("#ctx").mousedown( function(event){
+		socket.emit('keyPress',{inputId:'attack',state:true});	
+	});
+
+	$("#ctx").mouseup( function(event){
+		socket.emit('keyPress',{inputId:'attack',state:false});	
+	});
+
+
+	$("#ctx").mousemove( function(event){
+		var y = -500 + event.clientX - 8;
+		var x = -250 + event.clientY - 8;
+
+		var angle = Math.atan2(x,y) *180/Math.PI ;
+
+		socket.emit('keyPress',{inputId:'mouseAngle',state:angle});	
+	});
+	
+	$("#chatinput").keyup( function(event){
+		if(event.keyCode == 13 ){
+			var chatpack={
+				text : document.getElementById("chatinput").value,
+				pname: document.getElementById("myavtarimg").title
+			}
+				socket.emit('chatmsg',chatpack);
+				document.getElementById("chatinput").value = "";
+		}
+	});
+	
+	$("#join").click( function(){
+		var playername = document.getElementById("myavtarimg").title;
+		document.getElementById("mypname").value = playername;
+		var joinpack={
+			playername:playername,
+			avtarname:document.getElementById("myavtarimg").name,
+			bulletimg:document.getElementById("mybullet").name
+		}		
+		socket.emit('join',joinpack);	
+		document.getElementById("rightcolumn").style.display="Block";
+	});	
+
+</script>	
+</body>
+
+</html>
